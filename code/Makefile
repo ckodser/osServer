@@ -2,8 +2,8 @@ source_code="simpleWebServer.c"
 exec_file="my_server"
 
 path_to_exec_file="bin/$(exec_file)"
-path_to_content_files_unix := $(shell pwd)/cont
-path_to_content_files_windows := $(shell pwd)/WindowsCont
+path_to_content_files_unix := $(shell pwd)/cont/
+path_to_content_files_windows := $(shell pwd)/WindowsCont/
 NEW_PATH := $(shell pwd)/bin:$
 
 SHELL := /bin/bash
