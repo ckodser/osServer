@@ -37,6 +37,6 @@ install:
 	@echo Installed;
 
 clean:
-	@rm -f $(exec_file)
+	@rm -f $(path_to_exec_file);
 
 
