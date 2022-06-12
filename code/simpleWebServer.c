@@ -261,18 +261,21 @@ void* handle_request(void* fd_ind_point){
 	end=strchr(buf+5,' ')-buf;
 	memcpy(location, buf+start, end-start);
 	location[end-start]='\0';
+	
 	if(start==end){
 		strcpy(location, starting_page);
 		start=0;
 		end=strlen(location);
 	}
 	#ifdef DEBUG
-		printf("location *********\n%s\n",location);
+		printf("location ******** %s, %s\n",location, reletive_file_address(location));
 	#endif
+	
 	snprintf(logOfRequest+size, LOGSIZE, "Request = %s\n", location);
 	size=strlen(logOfRequest);
 	snprintf(logOfRequest+size, LOGSIZE,"try to read file %s\n",location );
 	size=strlen(logOfRequest);
+
 	if(!strncmp(location+(end-start-4),"html", 4)){
 		char* webpage=read_webpage(reletive_file_address(location));
 		if (webpage==NULL){
