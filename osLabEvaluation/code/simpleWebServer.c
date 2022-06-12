@@ -147,46 +147,28 @@ void read_config_file(){
 		memset(buff, 0, INNERBUFFSIZE);
 		if(fgets(buff, 255, (FILE*)config_file)==0){
 			break;
-		}
-		if(buff[0]=='#' || buff[0]==' ' || buff[0]=='\n'){
+		}if(buff[0]=='#' || buff[0]==' ' || buff[0]=='\n'){
 			continue;
 		}
 		char line[2][INNERBUFFSIZE];
-		memset(line, 0, 2*INNERBUFFSIZE);
-		int i;
-		int pointer0;
-		int pointer1;
-		pointer0=0;
-		pointer1=0;
-		for(i=0;buff[i]!='\n';i++){
-			if(buff[i]=='='){
-				pointer0=pointer0+1;
-				pointer1=0;
-				continue;
-			}
-			if(buff[i]==' '){
-				continue;
-			}
-			line[pointer0][pointer1]=buff[i];
-			pointer1=pointer1+1;
-		}
+		int start=strstr(buff, " = ")-buff;
+		buff[start]='\0';
+		strcpy(line[0], buff);
+		strcpy(line[1], buff+start+3);
+		line[1][strlen(line[1])-1]='\0';
 		printf("%s = %s\n", line[0],line[1]);
 
 		/////////////////// 
 		if(strcmp (line[0], "PORTNUM")==0){
 			sscanf(line[1], "%d", &PORTNUM);
-		}
-		else if(strcmp (line[0], "BUFSIZE")==0){
+		}else if(strcmp (line[0], "BUFSIZE")==0){
 			sscanf(line[1], "%d", &BUFSIZE);
-		}
-		else if(strcmp (line[0], "MAXPROCORTHREAD")==0){
+		}else if(strcmp (line[0], "MAXPROCORTHREAD")==0){
 			sscanf(line[1], "%d", &MAXPROCTHREAD);
 			MAXPROCTHREAD=min(MAXPROCTHREAD, MAXMAXPROCTHREAD);
-		}
-		else if(strcmp (line[0], "WebContentLocation")==0){
+		}else if(strcmp (line[0], "WebContentLocation")==0){
 			strcpy(content_location, line[1]);
-		}
-		else if(strcmp (line[0], "StartingPageName")==0){
+		}else if(strcmp (line[0], "StartingPageName")==0){
 			strcpy(starting_page, line[1]);
 		}else if (strcmp (line[0], "LogFile")==0){
 			strcpy(LogFile, line[1]);
