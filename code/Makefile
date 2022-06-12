@@ -1,7 +1,11 @@
 source_code="simpleWebServer.c"
 exec_file="my_server"
+
 path_to_exec_file="bin/$(exec_file)"
+path_to_content_files_unix := $(shell pwd)/cont
+path_to_content_files_windows := $(shell pwd)/WindowsCont
 NEW_PATH := $(shell pwd)/bin:$
+
 SHELL := /bin/bash
 
 ifndef PLATFORM
@@ -30,11 +34,14 @@ all:
 
 install:
 #@echo Installing ...;
-	@mkdir -p ./bin;
-	@echo Add to PATH;
-	@echo export PATH="$(NEW_PATH)"PATH >> ~/.bashrc;
-	@source ~/.bashrc;
-	@echo Installed;
+#	@mkdir -p ./bin;
+#	@echo Add to PATH;
+#	@echo export PATH="$(NEW_PATH)"PATH >> ~/.bashrc;
+#	@source ~/.bashrc;
+#	@echo Installed;
+	@echo Add content address to conf
+	@echo WebContentLocation = $(path_to_content_files_unix) >> server.conf
+	@echo WebContentLocation = $(path_to_content_files_windows) >> WindowsServer.conf
 	@echo Add conf to /etc/simpleWebServer;
 	@mkdir -p /etc/simpleWebServer/
 	@rm -f /etc/simpleWebServer/*
