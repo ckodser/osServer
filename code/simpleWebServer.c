@@ -73,10 +73,10 @@
 #endif
 
 #ifdef UNIX
-char config_file_address[]="server.conf";
+char config_file_address[]="/etc/simpleWebServer/server.conf";
 #endif
 #ifdef WINDOWS
-char config_file_address[]="WindowsServer.conf";
+char config_file_address[]="/etc/simpleWebServer/WindowsServer.conf";
 #endif
 
 int min(int a,int b){
