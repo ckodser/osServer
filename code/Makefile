@@ -29,13 +29,17 @@ all:
 	@echo "Server will work $(TYPE) on $(PLATFORM)";
 
 install:
-	@echo Installing ...;
+#@echo Installing ...;
 	@mkdir -p ./bin;
 	@echo Add to PATH;
 	@echo export PATH="$(NEW_PATH)"PATH >> ~/.bashrc;
 	@source ~/.bashrc;
 	@echo Installed;
-
+	@echo Add conf to /etc/simpleWebServer;
+	@mkdir -p /etc/simpleWebServer/
+	@rm -f /etc/simpleWebServer/*
+	@cp -r server.conf WindowsServer.conf /etc/simpleWebServer
+	@echo Done
 clean:
 	@rm -f $(path_to_exec_file);
 
