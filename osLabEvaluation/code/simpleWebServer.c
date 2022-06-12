@@ -142,7 +142,10 @@ void read_config_file(){
 	FILE *config_file;
 	char buff[INNERBUFFSIZE];
 	config_file = fopen(config_file_address, "r");
-
+	if (config_file==NULL){
+		printf("couldn't open config file\n");
+		exit(1);
+	}
 	while(1){	
 		memset(buff, 0, INNERBUFFSIZE);
 		if(fgets(buff, 255, (FILE*)config_file)==0){
@@ -157,7 +160,6 @@ void read_config_file(){
 		strcpy(line[1], buff+start+3);
 		line[1][strlen(line[1])-1]='\0';
 		printf("%s = %s\n", line[0],line[1]);
-
 		/////////////////// 
 		if(strcmp (line[0], "PORTNUM")==0){
 			sscanf(line[1], "%d", &PORTNUM);
