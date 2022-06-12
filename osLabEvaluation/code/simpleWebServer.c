@@ -2,10 +2,10 @@
 
 
 //#define WINDOWS
-#define UNIX
+//#define UNIX
 //#define MULTITHREAD
 //#define MULTIPROC
-#define NORMAL
+//#define NORMAL
 #define DEBUG
 
 
