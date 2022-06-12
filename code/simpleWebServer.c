@@ -117,12 +117,20 @@ pid_t all_pids[MAXMAXPROCTHREAD];
 
 SOCKET fd_server;
 
+
+// This function returns the absolute path of the location.
+// In order to do that, it concats the content_location (i.e. absolute path to content folder) and the location.
+
 char* relative_file_address(char *location){
 	char *rel_location=malloc(strlen(location)+1+strlen(content_location));
 	strcpy(rel_location, content_location);
 	strcat(rel_location, location);
 	return rel_location;
 }
+
+
+// This function reads the content of a webpage to send it the client.
+
 char* read_webpage(char *webpage_location){
 	FILE *f = fopen(webpage_location, "r");
 	if(f==NULL){
@@ -137,6 +145,10 @@ char* read_webpage(char *webpage_location){
 	webpage[fsize]=0;
 	return webpage;
 }
+
+
+// This function reads the config file and initialize variables such as content location, port number, log file, maximum thread/processes, etc.
+// It reads from the /etc/simpleWebServer/server.conf
 
 void read_config_file(){
 	FILE *config_file;
@@ -183,6 +195,10 @@ void read_config_file(){
 	}
 	fclose (config_file);
 }
+
+
+// This function reads the user's information (which is in the message of the client to server).
+
 char* get_user_info(char* buf){
 	char* start=strstr(buf, "User-Agent:")+11;
 	char* end=strstr(start, "\n");
@@ -192,6 +208,11 @@ char* get_user_info(char* buf){
 	user_info[length]='\0';
 	return user_info;
 }
+
+
+// This function terminates the process/ thread which is the dedicated to the client to handle its requests.
+// It closes the connection (i.e. socket).
+// It asks the thread/process to send its log to the main thread/ process.
 
 void handle_request_finished(int fd_ind){
 	busy[fd_ind]=0;
@@ -203,6 +224,10 @@ void handle_request_finished(int fd_ind){
 	write(all_pipes[fd_ind][P_WRITE], log_ret[fd_ind], strlen(log_ret[fd_ind]) + 1);
 	#endif
 }
+
+
+//This function handles the requests coming from the client and sends the appropriate html/ picture upon the request.
+//At the end, it calls handle_request_finished.
 
 void* handle_request(void* fd_ind_point){
 	int fd_ind;
@@ -245,12 +270,14 @@ void* handle_request(void* fd_ind_point){
 	#ifdef DEBUG
 	printf("BUF ******ind= %d  *******\n%s(***************)\n", fd_ind,buf);
 	#endif
+
 	if(strlen(buf)==0){
 		snprintf(logOfRequest+size, LOGSIZE, "Request is empty!\n" );
 		size=strlen(logOfRequest);
 		handle_request_finished(fd_ind);
 		return (void *)0;
 	}
+
 	char* user_info=get_user_info(buf);
 	snprintf(logOfRequest+size, LOGSIZE, "User = %s\n",  user_info);
 	size=strlen(logOfRequest);
@@ -323,6 +350,11 @@ void* handle_request(void* fd_ind_point){
 	handle_request_finished(fd_ind);
 	return (void *)0;
 }
+
+
+
+//This function reads the log of the ind_th thread/process.
+
 void read_log(int ind){
 	if(read_log_flag[ind]){
 		char *log=log_ret[ind];
@@ -337,7 +369,12 @@ void read_log(int ind){
 
 #ifdef MULTIPROC
 char read_buffer[INNERBUFFSIZE];
-void check_proces(){
+
+
+//This function is necessary while serving with multi processes.
+//It reads the log buffer of the running processes.
+
+void check_all_processes(){
 	int i;
 	for(i=0;i<MAXPROCTHREAD;i+=1){
 		if(busy[i]){
@@ -355,6 +392,12 @@ void check_proces(){
 	}
 }
 #endif
+
+
+//This function is the interupt (i.e. Ctrl+C) handler.
+//It checks all the processes (when multi-processing is used) to gather all the log information.
+//It eventually writes all the logs on the log file.
+
 void IntHandler(int sig)
 {
 	#ifndef MULTIPROC
@@ -364,9 +407,9 @@ void IntHandler(int sig)
 	}
 	#endif
 	#ifdef MULTIPROC
-	check_proces();
+	check_all_processes();
 	#endif
-	printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n%s$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n",all_logs);
+	printf("Interupt detected ...\n All Logs\n",all_logs);
 	FILE *logfile;
 	char* address=relative_file_address(LogFile);
 	printf("\n save logs to: %s\n", address);
@@ -375,6 +418,10 @@ void IntHandler(int sig)
 	closesocket(fd_server);
 	exit(0);
 }
+
+
+//Main function.
+
 int main(int argc, char *argv[])
 {
 	signal(SIGINT, IntHandler);
@@ -447,6 +494,10 @@ int main(int argc, char *argv[])
 	free_proc=0;
 	#endif
 	int ind;	
+	
+	// Here when we accept a connection, based on the setting,
+	// we dedicate a thread or a process to handle the client.
+
 	while(1)
 	{	
 		fd_client = accept(fd_server, (struct sockaddr *)&client_addr, &sin_len);
@@ -459,12 +510,14 @@ int main(int argc, char *argv[])
 		ind=0;
 		#endif
 		#ifdef MULTIPROC
-		for(;busy[free_proc];free_proc=(free_proc+1)%MAXPROCTHREAD){check_proces();}
+		for(;busy[free_proc];free_proc=(free_proc+1)%MAXPROCTHREAD){check_all_processes();}
 		ind=free_proc;
 		#endif
 
 		fd[ind]=fd_client;
 
+	
+		// Creates a new Thread 
 
 		#ifdef MULTITHREAD
 		read_log(ind);
@@ -475,10 +528,16 @@ int main(int argc, char *argv[])
 		_beginthread(&handle_request, 0, (void*)&ind);
 		#endif
 		#endif
+		
+		// This Thread is going to handle the request.
+		
 		#ifdef NORMAL
 		handle_request((void*)&ind);
 		read_log(ind);
 		#endif
+
+		// A new process is created by fork()
+
 		#ifdef MULTIPROC
 		if(pipe(all_pipes[ind])!=0){
 			printf("couldn't pipe\n");
@@ -493,7 +552,7 @@ int main(int argc, char *argv[])
 			close(all_pipes[ind][P_READ]);
 			handle_request((void*)&ind);
 			exit(0);
-		}else{
+		}else{//parent
         	close(all_pipes[ind][P_WRITE]);
 			closesocket(fd[ind]);
 		}
