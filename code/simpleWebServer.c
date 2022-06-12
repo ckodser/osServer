@@ -409,7 +409,7 @@ void IntHandler(int sig)
 	#ifdef MULTIPROC
 	check_all_processes();
 	#endif
-	printf("Interupt detected ...\n All Logs\n",all_logs);
+	printf("Interupt detected ...\n All Logs\n%s\n",all_logs);
 	FILE *logfile;
 	char* address=relative_file_address(LogFile);
 	printf("\n save logs to: %s\n", address);
