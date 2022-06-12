@@ -467,26 +467,26 @@ int main(int argc, char *argv[])
 	read_config_file();
 
 	#ifdef WINDOWS
-		WSADATA wsa;
-		printf("\nInitialising Winsock...\n");
-		if (WSAStartup(MAKEWORD(2,2),&wsa) != 0)
-		{
-			printf("Failed. Error Code : %d",WSAGetLastError());
-			return 1;
-		}
-		printf("Initialised.\n");
+	WSADATA wsa;
+	printf("\nInitialising Winsock...\n");
+	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+	{
+		printf("Failed. Error Code : %d", WSAGetLastError());
+		return 1;
+	}
+	printf("Initialised.\n");
 	#endif
 
 	SOCKET fd_client;
 
 	fd_server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if(fd_server  == INVALID_SOCKET)
+	if (fd_server == INVALID_SOCKET)
 	{
 		printf("socket failed with error\n");
-        #ifdef WINDOWS
+		#ifdef WINDOWS
 		WSACleanup();
 		#endif
-        return 1;
+		return 1;
 	}
 	socklen_t sin_len;
 	struct sockaddr_in server_addr;
@@ -494,109 +494,119 @@ int main(int argc, char *argv[])
 	sin_len = sizeof(client_addr);
 
 	server_addr.sin_family = AF_INET;
-	server_addr.sin_addr.s_addr = INADDR_ANY;// could be inet_addr("127.0.0.1");
+	server_addr.sin_addr.s_addr = INADDR_ANY;	// could be inet_addr("127.0.0.1");
 	server_addr.sin_port = htons(PORTNUM);
 
-	if(bind(fd_server, (SOCKADDR *)&server_addr, sizeof(server_addr)) == SOCKET_ERROR)
+	if (bind(fd_server, (SOCKADDR*) &server_addr, sizeof(server_addr)) == SOCKET_ERROR)
 	{
 		printf("bind failed with error");
-        closesocket(fd_server);
+		closesocket(fd_server);
 		#ifdef WINDOWS
 		WSACleanup();
 		#endif
-        return 1;
+		return 1;
 	}
 
 	#ifdef WINDOWS
-	int num=1;
+	int num = 1;
 	#endif
 
 	#ifdef UNIX
-	int num=10;
+	int num = 10;
 	#endif
 
-	if(listen(fd_server,num) == SOCKET_ERROR)
+	if (listen(fd_server, num) == SOCKET_ERROR)
 	{
 		printf("listen failed with error");
-        closesocket(fd_server);
+		closesocket(fd_server);
 		#ifdef WINDOWS
 		WSACleanup();
 		#endif
-        return 1;
+		return 1;
 	}
 	#ifdef MULTITHREAD
 	int free_thread;
-	free_thread=0;
+	free_thread = 0;
 	#endif
 	#ifdef MULTIPROC
 	int free_proc;
-	free_proc=0;
+	free_proc = 0;
 	#endif
-	int ind;	
-	
+	int ind;
+
 	// Here when we accept a connection, based on the setting,
 	// we dedicate a thread or a process to handle the client.
 
-	while(1)
-	{	
-		fd_client = accept(fd_server, (struct sockaddr *)&client_addr, &sin_len);
+	while (1)
+	{
+		fd_client = accept(fd_server, (struct sockaddr *) &client_addr, &sin_len);
 
 		#ifdef MULTITHREAD
-		for(free_thread=(free_thread+1)%MAXPROCTHREAD;busy[free_thread];free_thread=(free_thread+1)%MAXPROCTHREAD){}
-		ind=free_thread;
+		for (free_thread = (free_thread + 1) % MAXPROCTHREAD; busy[free_thread]; free_thread = (free_thread + 1) % MAXPROCTHREAD) {}
+		ind = free_thread;
 		#endif
 		#ifdef NORMAL
-		ind=0;
+		ind = 0;
 		#endif
 		#ifdef MULTIPROC
-		for(;busy[free_proc];free_proc=(free_proc+1)%MAXPROCTHREAD){check_all_processes();}
-		ind=free_proc;
+		for (; busy[free_proc]; free_proc = (free_proc + 1) % MAXPROCTHREAD)
+		{
+			check_all_processes();
+		}
+		ind = free_proc;
 		#endif
 
-		fd[ind]=fd_client;
+		fd[ind] = fd_client;
 
-	
 		// Creates a new Thread 
 
 		#ifdef MULTITHREAD
 		read_log(ind);
 		#ifdef UNIX
-		pthread_create(&thread_pool[ind], NULL, &handle_request, (void *)&ind);
+		pthread_create(&thread_pool[ind], NULL, &handle_request, (void*) &ind);
 		#endif
 		#ifdef WINDOWS
-		_beginthread(&handle_request, 0, (void*)&ind);
+		_beginthread(&handle_request, 0, (void*) &ind);
 		#endif
 		#endif
-		
+
 		// This Thread is going to handle the request.
-		
+
 		#ifdef NORMAL
-		handle_request((void*)&ind);
+		handle_request((void*) &ind);
 		read_log(ind);
 		#endif
 
 		// A new process is created by fork()
 
 		#ifdef MULTIPROC
-		if(pipe(all_pipes[ind])!=0){
+		if (pipe(all_pipes[ind]) != 0)
+		{
 			printf("couldn't pipe\n");
 			return -1;
 		}
-		busy[ind]=1;
-		all_pids[ind]=fork();
-		if(all_pids[ind]<0){
+		busy[ind] = 1;
+		all_pids[ind] = fork();
+		if (all_pids[ind] < 0)
+		{
 			printf("couldn't fork\n");
-			return -1;	
-		}else if(all_pids[ind]==0){//child
+			return -1;
+		}
+		else if (all_pids[ind] == 0)
+		{
+			//child
 			close(all_pipes[ind][P_READ]);
-			handle_request((void*)&ind);
+			handle_request((void*) &ind);
 			exit(0);
-		}else{//parent
-        	close(all_pipes[ind][P_WRITE]);
+		}
+		else
+		{
+			//parent
+			close(all_pipes[ind][P_WRITE]);
 			closesocket(fd[ind]);
 		}
 		#endif
 	}
-	
-	return 0;	
+
+	return 0;
 }
