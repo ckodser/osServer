@@ -117,7 +117,7 @@ pid_t all_pids[MAXMAXPROCTHREAD];
 
 SOCKET fd_server;
 
-char* reletive_file_address(char *location){
+char* relative_file_address(char *location){
 	char *rel_location=malloc(strlen(location)+1+strlen(content_location));
 	strcpy(rel_location, content_location);
 	strcat(rel_location, location);
@@ -268,7 +268,7 @@ void* handle_request(void* fd_ind_point){
 		end=strlen(location);
 	}
 	#ifdef DEBUG
-		printf("location ******** %s, %s\n",location, reletive_file_address(location));
+		printf("location ******** %s, %s\n",location, relative_file_address(location));
 	#endif
 	
 	snprintf(logOfRequest+size, LOGSIZE, "Request = %s\n", location);
@@ -277,11 +277,11 @@ void* handle_request(void* fd_ind_point){
 	size=strlen(logOfRequest);
 
 	if(!strncmp(location+(end-start-4),"html", 4)){
-		char* webpage=read_webpage(reletive_file_address(location));
+		char* webpage=read_webpage(relative_file_address(location));
 		if (webpage==NULL){
 			snprintf(logOfRequest+size, LOGSIZE,"couldn't find html file\n");
 			size=strlen(logOfRequest);
-			webpage=read_webpage(reletive_file_address(Error));
+			webpage=read_webpage(relative_file_address(Error));
 		}
 		int n;
 		n=strlen(webpage);
@@ -293,7 +293,7 @@ void* handle_request(void* fd_ind_point){
 		#endif
 
 	}else{
-		char* address=reletive_file_address(location);
+		char* address=relative_file_address(location);
 
 		#ifdef UNIX
 		fdimg = open(address, O_RDONLY);
@@ -368,7 +368,7 @@ void IntHandler(int sig)
 	#endif
 	printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n%s$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n",all_logs);
 	FILE *logfile;
-	char* address=reletive_file_address(LogFile);
+	char* address=relative_file_address(LogFile);
 	printf("\n save logs to: %s\n", address);
 	logfile=fopen(address, "a");
 	fprintf(logfile, "%s", all_logs);
