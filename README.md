@@ -21,5 +21,5 @@ to config server use server.conf
 + `LogFile` indicate address of log file that store all logs. 
 + `ErrorHTML` indicate address of a page that will be showed if requested page doesn't exists. 
 + `MAXPROCORTHREAD` indicate maximum number of additional threads or procces.
-+ lines starting with `#` will be ignored
++ lines starting with `#` will be ignored.
 
