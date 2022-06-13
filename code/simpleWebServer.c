@@ -455,7 +455,14 @@ void IntHandler(int sig)
 	char *address = relative_file_address(LogFile);
 	printf("\n save logs to: %s\n", address);
 	logfile = fopen(address, "a");
-	fprintf(logfile, "%s", all_logs);
+	if(logfile == NULL)
+	{
+		printf("could not open logfile.\n saving logs failed.\n");
+	}
+	else
+	{
+		fprintf(logfile, "%s", all_logs);
+	}
 	closesocket(fd_server);
 	exit(0);
 }
@@ -565,10 +572,20 @@ int main(int argc, char *argv[])
 		#ifdef MULTITHREAD
 		read_log(ind);
 		#ifdef UNIX
-		pthread_create(&thread_pool[ind], NULL, &handle_request, (void*) &ind);
+		if (pthread_create(&thread_pool[ind], NULL, &handle_request, (void*) &ind)!=0)
+		{
+			printf("couldn't build thread\n");
+			closesocket(fd[ind]);
+			continue;
+		}
 		#endif
 		#ifdef WINDOWS
-		_beginthread(&handle_request, 0, (void*) &ind);
+		if(_beginthread(&handle_request, 0, (void*) &ind)==-1L)
+		{
+			printf("couldn't build thread\n");
+			closesocket(fd[ind]);
+			continue;
+		}
 		#endif
 		#endif
 
