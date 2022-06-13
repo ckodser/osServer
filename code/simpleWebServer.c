@@ -1,12 +1,12 @@
 //Be nam _e_ khoda
 
 
-//#define WINDOWS
+#define WINDOWS
 //#define UNIX
 //#define MULTITHREAD
 //#define MULTIPROC
-//#define NORMAL
 #define DEBUG
+#define NORMAL
 
 
 
@@ -249,7 +249,7 @@ void handle_request_finished(int fd_ind)
 	#ifdef UNIX
 	closesocket(fd[fd_ind]);
 	#endif // UNIX
-	
+
 	#ifdef MULTIPROC
 	#ifdef DEBUG
 	printf("%s\n", log_ret[fd_ind]);
@@ -362,12 +362,6 @@ void *handle_request(void *fd_ind_point)
 
 		#ifdef UNIX
 		fdimg = open(address, O_RDONLY);
-		#endif
-		#ifdef WINDOWS
-		HANDLE fdimg;
-		fdimg = CreateFileA(location, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		#endif
-
 		if (fdimg == INVALID_HANDLE_VALUE)
 		{
 			snprintf(logOfRequest + size, LOGSIZE, "couldn't find/open file\n");
@@ -375,16 +369,56 @@ void *handle_request(void *fd_ind_point)
 		}
 		else
 		{
-			#ifdef UNIX
 			sendfile(fd_client, fdimg, NULL, 200000);
-			#endif
-			#ifdef WINDOWS
-			DWORD dwNumToSend = 0;
-			DWORD nNumberOfBytesPerSend = 0;
-			//TransmitFile(fd_client, fdimg, dwNumToSend, nNumberOfBytesPerSend, NULL, NULL, 0);
-			#endif
 		}
 		CloseHandle(fdimg);
+		#endif // UNIX
+
+		#ifdef WINDOWS
+        char * fbuffer = 0;
+        long length;
+        FILE *f;
+
+        if ((f = fopen(address, "r")) == NULL)
+        {
+            printf("Error opening file");
+            exit(1);
+        }
+        fseek (f, 0, SEEK_END);
+        length = ftell(f);
+        fseek (f, 0, SEEK_SET);
+        fbuffer = malloc(length + 10);
+
+        printf("Length of the File %d\n", length);
+
+        char c = '\0';
+        int cnt = 0;
+
+        if (fbuffer)
+        {
+            while (cnt != length)
+            {
+                c = fgetc(f);
+                fbuffer[cnt ++] = c;
+            }
+        }
+        fclose (f);
+
+        printf("LOG OF REQUEST\n%s\nEND LOG OF REQUEST\n", logOfRequest);
+
+        char response[20000];
+        int hlen;
+
+        hlen = snprintf(response, sizeof(response),
+            "HTTP/1.1 200 OK\nContent-Type: image/gif\nContent-Length: %d\n\n", length);
+        memcpy(response + hlen, fbuffer, length);
+
+
+        //TODO Koddom Doroste?
+        //send(fd_client, response, hlen + length, 0);
+        send(fd_client, fbuffer, length, 0);
+
+        #endif
 	}
 	snprintf(logOfRequest + size, LOGSIZE, "Client Connection Closed\n");
 	size = strlen(logOfRequest);
