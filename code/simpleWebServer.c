@@ -79,10 +79,12 @@ char config_file_address[]="/etc/simpleWebServer/server.conf";
 char config_file_address[]="/etc/simpleWebServer/WindowsServer.conf";
 #endif
 
+#ifdef UNIX
 int min(int a,int b){
 	if(a<b)return a;
 	return b;
 }
+#endif
 
 int BUFSIZE;
 int PORTNUM;
@@ -373,7 +375,7 @@ void *handle_request(void *fd_ind_point)
 			#ifdef WINDOWS
 			DWORD dwNumToSend = 0;
 			DWORD nNumberOfBytesPerSend = 0;
-			TransmitFile(fd_client, fdimg, dwNumToSend, nNumberOfBytesPerSend, NULL, NULL, 0);
+			//TransmitFile(fd_client, fdimg, dwNumToSend, nNumberOfBytesPerSend, NULL, NULL, 0);
 			#endif
 		}
 		CloseHandle(fdimg);
