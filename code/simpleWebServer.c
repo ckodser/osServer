@@ -28,7 +28,7 @@
 #ifdef UNIX
 #include <pthread.h>
 #endif
-#endif 
+#endif
 
 #ifdef MULTIPROC
 #ifdef UNIX
@@ -39,7 +39,7 @@
 #include <windows.h>
 #include <tchar.h>
 #endif
-#endif 
+#endif
 
 #ifdef WINDOWS
 #include<winsock2.h>
@@ -55,7 +55,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-#include <time.h> 
+#include <time.h>
 #include <signal.h>
 
 #define INNERBUFFSIZE 2000
@@ -76,7 +76,7 @@
 char config_file_address[]="/etc/simpleWebServer/server.conf";
 #endif
 #ifdef WINDOWS
-char config_file_address[]="/etc/simpleWebServer/WindowsServer.conf";
+char config_file_address[]="WindowsServer.conf";
 #endif
 
 #ifdef UNIX
@@ -182,7 +182,7 @@ void read_config_file()
 		strcpy(line[1], buff + start + 3);
 		line[1][strlen(line[1]) - 1] = '\0';
 		printf("%s = %s\n", line[0], line[1]);
-		/////////////////// 
+		///////////////////
 		if (strcmp(line[0], "PORTNUM") == 0)
 		{
 			sscanf(line[1], "%d", &PORTNUM);
@@ -243,7 +243,13 @@ char *get_user_info(char *buf)
 void handle_request_finished(int fd_ind)
 {
 	busy[fd_ind] = 0;
+	#ifdef WINDOWS
+	shutdown(fd[fd_ind], 1);
+	#endif //WINDOWS
+	#ifdef UNIX
 	closesocket(fd[fd_ind]);
+	#endif // UNIX
+	
 	#ifdef MULTIPROC
 	#ifdef DEBUG
 	printf("%s\n", log_ret[fd_ind]);
@@ -567,7 +573,7 @@ int main(int argc, char *argv[])
 
 		fd[ind] = fd_client;
 
-		// Creates a new Thread 
+		// Creates a new Thread
 
 		#ifdef MULTITHREAD
 		read_log(ind);
