@@ -40,7 +40,7 @@ config file content:
 ## About system
 This project, simply runs a web server (http). When a request (i.e. http request) is received, based on the settings, this server creates a new process or a new thread to handle the request. when a request is handled, corresponding thread and process is terminated. All the messages in connections and the log of requests are collected in each thread/ process, and is sent to the main thread/ process. Finally, when server is terminated, all those logs will be stored in log file.
 
-At this point, this projects runs well on unix in all Normal, multiThread, and multiProcess settings.
-But on Windows, it works in Normal, and multiThread (without image) settings.
+At this point, this projects runs well on **Unix** in all Normal, multiThread, and multiProcess settings.
+On **Windows**, it works in Normal, and multiThread (without image) settings.
 
 You can see `simpleWebServer.c` in code/ directory for more details. the code has comments which describe the bahavior of functions.
