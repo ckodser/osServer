@@ -43,3 +43,4 @@ This project, simply runs a web server (http). When a request (i.e. http request
 At this point, this projects runs well on unix in all Normal, multiThread, and multiProcess settings.
 But on Windows, it works in Normal, and multiThread (without image) settings.
 
+You can see `simpleWebServer.c` in code/ directory for more details. the code has comments which describe the bahavior of functions.
