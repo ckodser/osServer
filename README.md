@@ -37,3 +37,9 @@ config file content:
 + `MAXPROCORTHREAD` indicates maximum number of additional threads or procces.
 + lines starting with `#` will be ignored.
 
+## About system
+This project, simply runs a web server (http). When a request (i.e. http request) is received, based on the settings, this server creates a new process or a new thread to handle the request. when a request is handled, corresponding thread and process is terminated. 
+
+At this point, this projects runs well on unix in all Normal, multiThread, and multiProcess settings.
+But on Windows, it works in Normal, and multiThread (without image) settings.
+
