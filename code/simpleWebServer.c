@@ -5,7 +5,7 @@
 //#define UNIX
 //#define MULTITHREAD
 //#define MULTIPROC
-#define DEBUG
+//#define DEBUG
 //#define NORMAL
 
 
@@ -388,7 +388,7 @@ void *handle_request(void *fd_ind_point)
         long length;
         FILE *f;
 
-        if ((f = fopen(address, "r")) == NULL)
+        if ((f = fopen(address, "rb")) == NULL)
         {
             printf("Error opening file");
             exit(1);
@@ -397,8 +397,6 @@ void *handle_request(void *fd_ind_point)
         length = ftell(f);
         fseek (f, 0, SEEK_SET);
         fbuffer = malloc(length + 10);
-
-        printf("Length of the File %d\n", length);
 
         char c = '\0';
         int cnt = 0;
@@ -410,23 +408,12 @@ void *handle_request(void *fd_ind_point)
                 c = fgetc(f);
                 fbuffer[cnt ++] = c;
             }
+            fbuffer[length]='\0';
+        }else{
+        	printf("malloc failed!\n");
         }
         fclose (f);
-
-        printf("LOG OF REQUEST\n%s\nEND LOG OF REQUEST\n", logOfRequest);
-
-        char response[20000];
-        int hlen;
-
-        hlen = snprintf(response, sizeof(response),
-            "HTTP/1.1 200 OK\nContent-Type: image/gif\nContent-Length: %d\n\n", length);
-        memcpy(response + hlen, fbuffer, length);
-
-
-        //TODO Koddom Doroste?
-        //send(fd_client, response, hlen + length, 0);
         send(fd_client, fbuffer, length, 0);
-
         #endif
 	}
 	snprintf(logOfRequest + size, MAXLOGSIZE, "Client Connection Closed\n");
