@@ -10,7 +10,7 @@
   * when server is up, it uses `\etc\simpleWebServer\server.conf` as config file. see the related [section](##config_file). 
 
 ## Compile source code
-Use `make`. **Makefile** configuration:
+Use `make` in `code/` directory. **Makefile** configuration:
 
 + `sudo make install`
   * to add my_server to your $PATH. after compiling, you can run server with command `my_server` (unix only).
