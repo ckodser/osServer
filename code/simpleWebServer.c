@@ -5,12 +5,13 @@
 //#define UNIX
 //#define MULTITHREAD
 //#define MULTIPROC
-//#define NORMAL
 #define DEBUG
+//#define NORMAL
 
 
 
 #ifdef UNIX
+#define fd_server_listen_mode 10
 #define CloseHandle close
 #define INVALID_HANDLE_VALUE -1
 #define SOCKET int
@@ -42,6 +43,7 @@
 #endif
 
 #ifdef WINDOWS
+#define fd_server_listen_mode 1
 #include<winsock2.h>
 #include<Mswsock.h>
 #include <ws2tcpip.h>
@@ -58,8 +60,9 @@
 #include <time.h>
 #include <signal.h>
 
-#define INNERBUFFSIZE 2000
-#define LOGSIZE 5000
+#define MAXLOCATIONSIZE 2000
+#define MAXCONFIGLINELENGTH 100
+#define MAXLOGSIZE 5000
 #define ALLLOGSSIZE 200000
 
 #ifdef MULTITHREAD
@@ -89,11 +92,13 @@ int min(int a,int b){
 int BUFSIZE;
 int PORTNUM;
 int MAXPROCTHREAD;
-char content_location[INNERBUFFSIZE];
-char LogFile[INNERBUFFSIZE];
-char Error[INNERBUFFSIZE];
+char content_location[MAXLOCATIONSIZE];
+char log_file_location[MAXLOCATIONSIZE];
+char error_file_location[MAXLOCATIONSIZE];
+char starting_page_location[MAXLOCATIONSIZE];
+
 char all_logs[ALLLOGSSIZE];
-char starting_page[INNERBUFFSIZE];
+
 
 SOCKET fd[MAXMAXPROCTHREAD];
 char* log_ret[MAXMAXPROCTHREAD];
@@ -143,10 +148,10 @@ char *read_webpage(char *webpage_location)
 	fseek(f, 0, SEEK_END);
 	long fsize = ftell(f);
 	fseek(f, 0, SEEK_SET);
-	char *webpage = malloc(fsize + 1);
+	char *webpage = malloc(fsize + 10);
 	fread(webpage, fsize, 1, f);
 	fclose(f);
-	webpage[fsize] = 0;
+	webpage[fsize] = '\0';
 	return webpage;
 }
 
@@ -157,8 +162,11 @@ char *read_webpage(char *webpage_location)
 void read_config_file()
 {
 	FILE * config_file;
-	char buff[INNERBUFFSIZE];
+	char buff[MAXCONFIGLINELENGTH];
 	config_file = fopen(config_file_address, "r");
+
+
+
 	if (config_file == NULL)
 	{
 		printf("couldn't open config file\n");
@@ -166,7 +174,7 @@ void read_config_file()
 	}
 	while (1)
 	{
-		memset(buff, 0, INNERBUFFSIZE);
+		memset(buff, 0, MAXCONFIGLINELENGTH);
 		if (fgets(buff, 255, (FILE*) config_file) == 0)
 		{
 			break;
@@ -175,7 +183,7 @@ void read_config_file()
 		{
 			continue;
 		}
-		char line[2][INNERBUFFSIZE];
+		char line[2][MAXCONFIGLINELENGTH];
 		int start = strstr(buff, " = ") - buff;
 		buff[start] = '\0';
 		strcpy(line[0], buff);
@@ -202,15 +210,15 @@ void read_config_file()
 		}
 		else if (strcmp(line[0], "StartingPageName") == 0)
 		{
-			strcpy(starting_page, line[1]);
+			strcpy(starting_page_location, line[1]);
 		}
 		else if (strcmp(line[0], "LogFile") == 0)
 		{
-			strcpy(LogFile, line[1]);
+			strcpy(log_file_location, line[1]);
 		}
 		else if (strcmp(line[0], "ErrorHTML") == 0)
 		{
-			strcpy(Error, line[1]);
+			strcpy(error_file_location, line[1]);
 		}
 		else
 		{
@@ -240,21 +248,21 @@ char *get_user_info(char *buf)
 // It closes the connection (i.e. socket).
 // It asks the thread/process to send its log to the main thread/ process.
 
-void handle_request_finished(int fd_ind)
+void handle_request_finished(int fd_index)
 {
-	busy[fd_ind] = 0;
+	busy[fd_index] = 0;
 	#ifdef WINDOWS
-	shutdown(fd[fd_ind], 1);
+	shutdown(fd[fd_index], 1);
 	#endif //WINDOWS
 	#ifdef UNIX
-	closesocket(fd[fd_ind]);
+	closesocket(fd[fd_index]);
 	#endif // UNIX
-	
+
 	#ifdef MULTIPROC
 	#ifdef DEBUG
-	printf("%s\n", log_ret[fd_ind]);
+	printf("%s\n", log_ret[fd_index]);
 	#endif
-	write(all_pipes[fd_ind][P_WRITE], log_ret[fd_ind], strlen(log_ret[fd_ind]) + 1);
+	write(all_pipes[fd_index][P_WRITE], log_ret[fd_index], strlen(log_ret[fd_index]) + 1);
 	#endif
 }
 
@@ -269,7 +277,7 @@ void *handle_request(void *fd_ind_point)
 	busy[fd_ind] = 1;
 	read_log_flag[fd_ind] = 1;
 	SOCKET fd_client = fd[fd_ind];
-	char *logOfRequest = malloc(LOGSIZE);
+	char *logOfRequest = malloc(MAXLOGSIZE);
 	log_ret[fd_ind] = logOfRequest;
 
 	char *buf = malloc(BUFSIZE);
@@ -281,16 +289,16 @@ void *handle_request(void *fd_ind_point)
 	timeinfo = localtime(&rawtime);
 
 	int size = 0;
-	snprintf(logOfRequest + size, LOGSIZE, "Time = %s", asctime(timeinfo));
+	snprintf(logOfRequest + size, MAXLOGSIZE, "Time = %s", asctime(timeinfo));
 	size = strlen(logOfRequest);
 	if (fd_client == INVALID_SOCKET)
 	{
-		snprintf(logOfRequest + size, LOGSIZE, "Connection Failed! Can't Connect to Client \n");
+		snprintf(logOfRequest + size, MAXLOGSIZE, "Connection Failed! Can't Connect to Client \n");
 		size = strlen(logOfRequest);
 		handle_request_finished(fd_ind);
 		return (void*) 0;
 	}
-	snprintf(logOfRequest + size, LOGSIZE, "Client Connection Accepted\n");
+	snprintf(logOfRequest + size, MAXLOGSIZE, "Client Connection Accepted\n");
 	size = strlen(logOfRequest);
 	memset(buf, 0, BUFSIZE);
 	#ifdef UNIX
@@ -305,16 +313,16 @@ void *handle_request(void *fd_ind_point)
 
 	if (strlen(buf) == 0)
 	{
-		snprintf(logOfRequest + size, LOGSIZE, "Request is empty!\n");
+		snprintf(logOfRequest + size, MAXLOGSIZE, "Request is empty!\n");
 		size = strlen(logOfRequest);
 		handle_request_finished(fd_ind);
 		return (void*) 0;
 	}
 
 	char *user_info = get_user_info(buf);
-	snprintf(logOfRequest + size, LOGSIZE, "User = %s\n", user_info);
+	snprintf(logOfRequest + size, MAXLOGSIZE, "User = %s\n", user_info);
 	size = strlen(logOfRequest);
-	char location[INNERBUFFSIZE];
+	char location[MAXLOCATIONSIZE];
 	int start;
 	int end;
 	start = 5;
@@ -324,7 +332,7 @@ void *handle_request(void *fd_ind_point)
 
 	if (start == end)
 	{
-		strcpy(location, starting_page);
+		strcpy(location, starting_page_location);
 		start = 0;
 		end = strlen(location);
 	}
@@ -332,9 +340,9 @@ void *handle_request(void *fd_ind_point)
 	printf("location ********%s, %s\n", location, relative_file_address(location));
 	#endif
 
-	snprintf(logOfRequest + size, LOGSIZE, "Request = %s\n", location);
+	snprintf(logOfRequest + size, MAXLOGSIZE, "Request = %s\n", location);
 	size = strlen(logOfRequest);
-	snprintf(logOfRequest + size, LOGSIZE, "try to read file %s\n", location);
+	snprintf(logOfRequest + size, MAXLOGSIZE, "try to read file %s\n", location);
 	size = strlen(logOfRequest);
 
 	if (!strncmp(location + (end - start - 4), "html", 4))
@@ -342,9 +350,9 @@ void *handle_request(void *fd_ind_point)
 		char *webpage = read_webpage(relative_file_address(location));
 		if (webpage == NULL)
 		{
-			snprintf(logOfRequest + size, LOGSIZE, "couldn't find html file\n");
+			snprintf(logOfRequest + size, MAXLOGSIZE, "couldn't find html file\n");
 			size = strlen(logOfRequest);
-			webpage = read_webpage(relative_file_address(Error));
+			webpage = read_webpage(relative_file_address(error_file_location));
 		}
 		int n;
 		n = strlen(webpage);
@@ -352,7 +360,8 @@ void *handle_request(void *fd_ind_point)
 		write(fd_client, webpage, n - 1);
 		#endif
 		#ifdef WINDOWS
-		send(fd_client, webpage, n - 1, 0);
+		n = strstr(webpage, "</html>")-webpage+7;
+		send(fd_client, webpage, n, 0);
 		#endif
 
 	}
@@ -362,31 +371,65 @@ void *handle_request(void *fd_ind_point)
 
 		#ifdef UNIX
 		fdimg = open(address, O_RDONLY);
-		#endif
-		#ifdef WINDOWS
-		HANDLE fdimg;
-		fdimg = CreateFileA(location, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		#endif
-
 		if (fdimg == INVALID_HANDLE_VALUE)
 		{
-			snprintf(logOfRequest + size, LOGSIZE, "couldn't find/open file\n");
+			snprintf(logOfRequest + size, MAXLOGSIZE, "couldn't find/open file\n");
 			size = strlen(logOfRequest);
 		}
 		else
 		{
-			#ifdef UNIX
 			sendfile(fd_client, fdimg, NULL, 200000);
-			#endif
-			#ifdef WINDOWS
-			DWORD dwNumToSend = 0;
-			DWORD nNumberOfBytesPerSend = 0;
-			//TransmitFile(fd_client, fdimg, dwNumToSend, nNumberOfBytesPerSend, NULL, NULL, 0);
-			#endif
 		}
 		CloseHandle(fdimg);
+		#endif // UNIX
+
+		#ifdef WINDOWS
+        char * fbuffer = 0;
+        long length;
+        FILE *f;
+
+        if ((f = fopen(address, "r")) == NULL)
+        {
+            printf("Error opening file");
+            exit(1);
+        }
+        fseek (f, 0, SEEK_END);
+        length = ftell(f);
+        fseek (f, 0, SEEK_SET);
+        fbuffer = malloc(length + 10);
+
+        printf("Length of the File %d\n", length);
+
+        char c = '\0';
+        int cnt = 0;
+
+        if (fbuffer)
+        {
+            while (cnt != length)
+            {
+                c = fgetc(f);
+                fbuffer[cnt ++] = c;
+            }
+        }
+        fclose (f);
+
+        printf("LOG OF REQUEST\n%s\nEND LOG OF REQUEST\n", logOfRequest);
+
+        char response[20000];
+        int hlen;
+
+        hlen = snprintf(response, sizeof(response),
+            "HTTP/1.1 200 OK\nContent-Type: image/gif\nContent-Length: %d\n\n", length);
+        memcpy(response + hlen, fbuffer, length);
+
+
+        //TODO Koddom Doroste?
+        //send(fd_client, response, hlen + length, 0);
+        send(fd_client, fbuffer, length, 0);
+
+        #endif
 	}
-	snprintf(logOfRequest + size, LOGSIZE, "Client Connection Closed\n");
+	snprintf(logOfRequest + size, MAXLOGSIZE, "Client Connection Closed\n");
 	size = strlen(logOfRequest);
 	handle_request_finished(fd_ind);
 	return (void*) 0;
@@ -395,22 +438,22 @@ void *handle_request(void *fd_ind_point)
 
 //This function reads the log of the ind_th thread/process.
 
-void read_log(int ind)
+void read_log(int index)
 {
-	if (read_log_flag[ind])
+	if (read_log_flag[index])
 	{
-		char *log = log_ret[ind];
+		char *log = log_ret[index];
 		strcat(all_logs, "********************\n");
 		strcat(all_logs, log);
 		#ifdef DEBUG
-		printf("$*$*$*$*%d$*$*$*$*$*$\n%s$*$*$*$*$*$*$*$*$*$\n", ind, log);
+		printf("$*$*$*$*%d$*$*$*$*$*$\n%s$*$*$*$*$*$*$*$*$*$\n", index, log);
 		#endif
-		read_log_flag[ind] = 0;
+		read_log_flag[index] = 0;
 	}
 }
 
 #ifdef MULTIPROC
-char read_buffer[INNERBUFFSIZE];
+char read_buffer[MAXLOGSIZE];
 
 
 //This function is necessary while serving with multi processes.
@@ -423,12 +466,12 @@ void check_all_processes()
 	{
 		if (busy[i])
 		{
-			int len = read(all_pipes[i][P_READ], read_buffer, INNERBUFFSIZE);
+			int len = read(all_pipes[i][P_READ], read_buffer, MAXLOGSIZE);
 			if (len > 0)
 			{
 				read_buffer[len] = 0;
 				read_log_flag[i] = 1;
-				log_ret[i] = malloc(INNERBUFFSIZE);
+				log_ret[i] = malloc(MAXLOGSIZE);
 				strcpy(log_ret[i], read_buffer);
 				memset(read_buffer, 0, sizeof(read_buffer));
 				read_log(i);
@@ -458,7 +501,7 @@ void IntHandler(int sig)
 	#endif
 	printf("Interupt detected ...\n All Logs\n%s\n", all_logs);
 	FILE * logfile;
-	char *address = relative_file_address(LogFile);
+	char *address = relative_file_address(log_file_location);
 	printf("\n save logs to: %s\n", address);
 	logfile = fopen(address, "a");
 	if(logfile == NULL)
@@ -522,15 +565,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	#ifdef WINDOWS
-	int num = 1;
-	#endif
-
-	#ifdef UNIX
-	int num = 10;
-	#endif
-
-	if (listen(fd_server, num) == SOCKET_ERROR)
+	if (listen(fd_server, fd_server_listen_mode) == SOCKET_ERROR)
 	{
 		printf("listen failed with error");
 		closesocket(fd_server);
@@ -547,7 +582,7 @@ int main(int argc, char *argv[])
 	int free_proc;
 	free_proc = 0;
 	#endif
-	int ind;
+	int assigned_index;
 
 	// Here when we accept a connection, based on the setting,
 	// we dedicate a thread or a process to handle the client.
@@ -558,38 +593,38 @@ int main(int argc, char *argv[])
 
 		#ifdef MULTITHREAD
 		for (free_thread = (free_thread + 1) % MAXPROCTHREAD; busy[free_thread]; free_thread = (free_thread + 1) % MAXPROCTHREAD) {}
-		ind = free_thread;
+		assigned_index = free_thread;
 		#endif
 		#ifdef NORMAL
-		ind = 0;
+		assigned_index = 0;
 		#endif
 		#ifdef MULTIPROC
 		for (; busy[free_proc]; free_proc = (free_proc + 1) % MAXPROCTHREAD)
 		{
 			check_all_processes();
 		}
-		ind = free_proc;
+		assigned_index = free_proc;
 		#endif
 
-		fd[ind] = fd_client;
+		fd[assigned_index] = fd_client;
 
 		// Creates a new Thread
 
 		#ifdef MULTITHREAD
-		read_log(ind);
+		read_log(assigned_index);
 		#ifdef UNIX
-		if (pthread_create(&thread_pool[ind], NULL, &handle_request, (void*) &ind)!=0)
+		if (pthread_create(&thread_pool[assigned_index], NULL, &handle_request, (void*) &assigned_index)!=0)
 		{
 			printf("couldn't build thread\n");
-			closesocket(fd[ind]);
+			closesocket(fd[assigned_index]);
 			continue;
 		}
 		#endif
 		#ifdef WINDOWS
-		if(_beginthread(&handle_request, 0, (void*) &ind)==-1L)
+		if(_beginthread(&handle_request, 0, (void*) &assigned_index)==-1L)
 		{
 			printf("couldn't build thread\n");
-			closesocket(fd[ind]);
+			closesocket(fd[assigned_index]);
 			continue;
 		}
 		#endif
@@ -598,37 +633,37 @@ int main(int argc, char *argv[])
 		// This Thread is going to handle the request.
 
 		#ifdef NORMAL
-		handle_request((void*) &ind);
-		read_log(ind);
+		handle_request((void*) &assigned_index);
+		read_log(assigned_index);
 		#endif
 
 		// A new process is created by fork()
 
 		#ifdef MULTIPROC
-		if (pipe(all_pipes[ind]) != 0)
+		if (pipe(all_pipes[assigned_index]) != 0)
 		{
 			printf("couldn't pipe\n");
 			return -1;
 		}
-		busy[ind] = 1;
-		all_pids[ind] = fork();
-		if (all_pids[ind] < 0)
+		busy[assigned_index] = 1;
+		all_pids[assigned_index] = fork();
+		if (all_pids[assigned_index] < 0)
 		{
 			printf("couldn't fork\n");
 			return -1;
 		}
-		else if (all_pids[ind] == 0)
+		else if (all_pids[assigned_index] == 0)
 		{
 			//child
-			close(all_pipes[ind][P_READ]);
-			handle_request((void*) &ind);
+			close(all_pipes[assigned_index][P_READ]);
+			handle_request((void*) &assigned_index);
 			exit(0);
 		}
 		else
 		{
 			//parent
-			close(all_pipes[ind][P_WRITE]);
-			closesocket(fd[ind]);
+			close(all_pipes[assigned_index][P_WRITE]);
+			closesocket(fd[assigned_index]);
 		}
 		#endif
 	}
