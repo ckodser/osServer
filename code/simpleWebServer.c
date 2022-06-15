@@ -250,7 +250,9 @@ char *get_user_info(char *buf)
 
 void handle_request_finished(int fd_index)
 {
+	#ifndef MULTIPROC
 	busy[fd_index] = 0;
+	#endif
 	#ifdef WINDOWS
 	shutdown(fd[fd_index], 1);
 	#endif //WINDOWS
@@ -627,12 +629,19 @@ int main(int argc, char *argv[])
 		// A new process is created by fork()
 
 		#ifdef MULTIPROC
-		if (pipe(all_pipes[assigned_index]) != 0)
+		#ifdef UNIX
+		int pipe_result=pipe(all_pipes[assigned_index]);
+		#endif
+		#ifdef WINDOWS
+		int pipe_result=_pipe(all_pipes[assigned_index], MAXLOGSIZE,_O_TEXT );
+		#endif
+		if (pipe_result!= 0)
 		{
 			printf("couldn't pipe\n");
 			return -1;
 		}
 		busy[assigned_index] = 1;
+		#ifdef UNIX
 		all_pids[assigned_index] = fork();
 		if (all_pids[assigned_index] < 0)
 		{
@@ -652,6 +661,12 @@ int main(int argc, char *argv[])
 			close(all_pipes[assigned_index][P_WRITE]);
 			closesocket(fd[assigned_index]);
 		}
+		#endif
+
+		#ifdef WINDOWS
+		// multiprocess in windows
+		handle_request((void*) &assigned_index);
+		#endif
 		#endif
 	}
 
