@@ -3,9 +3,10 @@ exec_file="my_server"
 
 path_to_exec_file="bin/$(exec_file)"
 path_to_content_files_unix := $(shell pwd)/cont/
-NEW_PATH := $(shell pwd)/bin:$
+NEW_PATH := "$(shell pwd)/bin:$"
 
 SHELL := /bin/bash
+PATH := $(shell pwd)/bin:$(PATH)
 
 ifndef PLATFORM
 	TYPE="Normal"
@@ -35,12 +36,13 @@ install:
 	@echo Installing ...;
 	@mkdir -p ./bin;
 	@echo Add to PATH;
-	@echo export PATH="$(NEW_PATH)"PATH >> ~/.bashrc;
+	@export PATH=$(shell pwd)/bin:$$PATH; echo $$PATH; 
 	@source ~/.bashrc;
 	@echo Installed;
 	@echo Add conf to /etc/simpleWebServer;
 	@mkdir -p /etc/simpleWebServer/
 	@rm -f /etc/simpleWebServer/*
+	@cp server.conf /etc/simpleWebServer/server.conf
 	@echo Add content address to conf
 	@echo WebContentLocation = $(path_to_content_files_unix) >> /etc/simpleWebServer/server.conf
 	@echo Done
