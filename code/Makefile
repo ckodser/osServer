@@ -35,8 +35,9 @@ install:
 	@echo Installing ...;
 	@mkdir -p ./bin;
 	@echo Add to PATH;
-	@echo export PATH="$(NEW_PATH)"PATH >> ~/.bashrc;
-	@source ~/.bashrc;
+	@echo export PATH="$(NEW_PATH)"PATH >> /home/keivan-rezaei/.bashrc;
+	@echo export PATH="$(NEW_PATH)"PATH;
+	@source /home/keivan-rezaei/.bashrc;
 	@echo Installed;
 	@echo Add conf to /etc/simpleWebServer;
 	@mkdir -p /etc/simpleWebServer/
@@ -47,3 +48,4 @@ install:
 	@echo Done
 clean:
 	@rm -f $(path_to_exec_file);
+
