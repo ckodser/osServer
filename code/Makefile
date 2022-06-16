@@ -17,11 +17,11 @@ endif
 
 all:
 	@if [ $(TYPE) = "multiThread" ] && [ $(PLATFORM) = "windows" ] ; then \
-		gcc $(source_code) -o $(path_to_exec_file) -DMULTITHREAD -DWINDOWS -lws2_32; \
+		gcc $(source_code) -DMULTITHREAD -DWINDOWS -lws2_32 -o $(path_to_exec_file);  \
 	elif [ $(TYPE) = "multiProcess" ] && [ $(PLATFORM) = "windows" ] ; then \
-		gcc $(source_code) -o $(path_to_exec_file) -DMULTIPROC -DWINDOWS -lws2_32; \
+		gcc $(source_code) -DMULTIPROC -DWINDOWS -lws2_32 -o $(path_to_exec_file); \
 	elif [ $(TYPE) = "Normal" ] && [ $(PLATFORM) = "windows" ] ; then \
-		gcc $(source_code) -o $(path_to_exec_file) -DNORMAL -DWINDOWS -lws2_32; \
+		gcc $(source_code) -DNORMAL -DWINDOWS -lws2_32 -o $(path_to_exec_file); \
 	elif [ $(TYPE) = "multiThread" ] ; then \
 		gcc -o $(path_to_exec_file) -DMULTITHREAD -DUNIX -pthread $(source_code); \
 	elif [ $(TYPE) = "multiProcess" ] ; then \
