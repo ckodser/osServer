@@ -3,7 +3,6 @@ exec_file="my_server"
 
 path_to_exec_file="bin/$(exec_file)"
 path_to_content_files_unix := $(shell pwd)/cont/
-path_to_content_files_windows := $(shell pwd)/WindowsCont/
 NEW_PATH := $(shell pwd)/bin:$
 
 SHELL := /bin/bash
@@ -42,10 +41,8 @@ install:
 	@echo Add conf to /etc/simpleWebServer;
 	@mkdir -p /etc/simpleWebServer/
 	@rm -f /etc/simpleWebServer/*
-	@cp -r server.conf WindowsServer.conf /etc/simpleWebServer
 	@echo Add content address to conf
 	@echo WebContentLocation = $(path_to_content_files_unix) >> /etc/simpleWebServer/server.conf
-	@echo WebContentLocation = $(path_to_content_files_windows) >> /etc/simpleWebServer/WindowsServer.conf
 	@echo Done
 clean:
 	@rm -f $(path_to_exec_file);
