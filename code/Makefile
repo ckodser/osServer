@@ -16,6 +16,7 @@ ifndef PLATFORM
 endif
 
 all:
+	@mkdir -p ./bin;
 	@if [ $(TYPE) = "multiThread" ] && [ $(PLATFORM) = "windows" ] ; then \
 		gcc $(source_code) -DMULTITHREAD -DWINDOWS -lws2_32 -o $(path_to_exec_file);  \
 	elif [ $(TYPE) = "multiProcess" ] && [ $(PLATFORM) = "windows" ] ; then \
