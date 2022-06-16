@@ -392,7 +392,7 @@ void *handle_request(void *fd_ind_point)
 
         if ((f = fopen(address, "rb")) == NULL)
         {
-			close(fd_client);
+			handle_request_finished(fd_ind);
         	return (void *)0;
 		}
         fseek (f, 0, SEEK_END);
