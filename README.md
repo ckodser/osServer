@@ -1,7 +1,7 @@
 # osServer Project
 
-+ _Arshia Soltani 98109623
-+ _Keivan Rezaei 97110109
++ Arshia Soltani 98109623
++ Keivan Rezaei 97110109
 
 
 ## How to use system
