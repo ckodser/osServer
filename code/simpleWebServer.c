@@ -392,7 +392,6 @@ void *handle_request(void *fd_ind_point)
 
         if ((f = fopen(address, "rb")) == NULL)
         {
-            printf("Error opening file");
 			close(fd_client);
         	return (void *)0;
 		}
