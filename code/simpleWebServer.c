@@ -393,8 +393,9 @@ void *handle_request(void *fd_ind_point)
         if ((f = fopen(address, "rb")) == NULL)
         {
             printf("Error opening file");
-            exit(1);
-        }
+			close(fd_client);
+        	return (void *)0;
+		}
         fseek (f, 0, SEEK_END);
         length = ftell(f);
         fseek (f, 0, SEEK_SET);
