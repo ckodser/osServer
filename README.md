@@ -23,6 +23,7 @@ Use `make` in `code/` directory. **Makefile** configuration:
 + `sudo make TYPE=Normal/multiThread/multiProc PLATFORM=unix/windows` compiles code for given type and platform.
   * for example, `sudo make TYPE=multiThread PLATFORM=unix` builds source code to handle requests with multi threads on unix.
 + `sudo make clean` removes executable files.
++ On windows, installation is not possible but `make` works. `my_server.exe` should be run from `code\` directory (i.e. `bin\my_server.exe`.
 
 default platform is unix and default time is Normal (e.g. `make` creates executable file with normal type on unix).
 
