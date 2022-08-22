@@ -50,4 +50,4 @@ On **Windows**, it works in Normal, and multiThread (without image) settings.
 
 You can see `simpleWebServer.c` in code/ directory for more details. the code has comments which describe the bahavior of functions.
 
-You could see site in <a href="cserver.ckodser.ir"> cserver.ckodser.ir </a>
+You could see site in <a href="http://cserver.ckodser.ir"> cserver.ckodser.ir </a>
